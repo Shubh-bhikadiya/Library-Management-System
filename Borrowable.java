@@ -1,0 +1,3 @@
+interface Borrowable {
+    int getFinePerDay();
+}
