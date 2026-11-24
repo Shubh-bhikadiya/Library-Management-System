@@ -38,6 +38,18 @@ class CommandProcessor {
                 System.out.println("OK");
             }
             case "INVENTORY" -> printInventory();
+            case "BORROW" -> {
+                int dueDay = library.borrow(f[1], f[2]);
+                System.out.println("OK due on day " + dueDay);
+            }
+            case "RETURN" -> {
+                int fine = library.returnItem(f[1]);
+                System.out.println("OK fine " + fine);
+            }
+            case "ADVANCE" -> {
+                int day = library.advance(Integer.parseInt(f[1]));
+                System.out.println("OK today is day " + day);
+            }
             default -> System.out.println("(not implemented yet) " + f[0]);
         }
     }
