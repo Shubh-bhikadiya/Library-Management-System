@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,10 @@ class Library {
         members.put(member.getId(), member);
     }
 
+    public int getToday() {
+        return today;
+    }
+
     public int borrow(String memberId, String itemId)
             throws ItemNotFoundException, MemberNotFoundException,
                    ItemNotAvailableException, BorrowLimitExceededException {
@@ -35,7 +40,7 @@ class Library {
         if (loansByItemId.containsKey(itemId)) {
             throw new ItemNotAvailableException(itemId + " is on loan");
         }
-        if (countLoans(memberId) >= member.getMaxItems()) {
+        if (loansHeldBy(memberId).size() >= member.getMaxItems()) {
             throw new BorrowLimitExceededException(
                     memberId + " has reached the limit of " + member.getMaxItems());
         }
@@ -57,16 +62,6 @@ class Library {
         return loan.fine(today);
     }
 
-    private int countLoans(String memberId) {
-        int count = 0;
-        for (Loan loan : loansByItemId.values()) {
-            if (loan.getMember().getId().equals(memberId)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
     public int advance(int days) {
         today += days;
         return today;
@@ -74,6 +69,40 @@ class Library {
 
     public List<LibraryItem> inventory() {
         return new ArrayList<>(items.values());
+    }
+
+    public List<LibraryItem> search(String text) {
+        List<LibraryItem> result = new ArrayList<>();
+        for (LibraryItem item : items.values()) {
+            if (item.matchesTitle(text)) {
+                result.add(item);
+            }
+        }
+        result.sort(Comparator.comparing(LibraryItem::getTitle));
+        return result;
+    }
+
+    public List<Loan> loansOf(String memberId) throws MemberNotFoundException {
+        if (!members.containsKey(memberId)) {
+            throw new MemberNotFoundException("member " + memberId + " not found");
+        }
+        List<Loan> result = loansHeldBy(memberId);
+        result.sort(Comparator.comparing(Loan::getDueDay)
+                .thenComparing(loan -> loan.getItem().getId()));
+        return result;
+    }
+
+    public List<Loan> overdue() {
+        List<Loan> result = new ArrayList<>();
+        for (Loan loan : loansByItemId.values()) {
+            if (loan.daysLate(today) > 0) {
+                result.add(loan);
+            }
+        }
+        result.sort(Comparator.comparing((Loan loan) -> loan.daysLate(today))
+                .reversed()
+                .thenComparing(loan -> loan.getItem().getId()));
+        return result;
     }
 
     public String statusOf(LibraryItem item) {
@@ -85,5 +114,16 @@ class Library {
             return "AVAILABLE";
         }
         return "NOT_BORROWABLE";
+    }
+
+    // Unsorted: every active loan held by this member.
+    private List<Loan> loansHeldBy(String memberId) {
+        List<Loan> held = new ArrayList<>();
+        for (Loan loan : loansByItemId.values()) {
+            if (loan.getMember().getId().equals(memberId)) {
+                held.add(loan);
+            }
+        }
+        return held;
     }
 }

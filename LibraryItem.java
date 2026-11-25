@@ -12,4 +12,8 @@ abstract class LibraryItem {
     public String getTitle() { return title; }
 
     public abstract ItemType getType();
+
+    public boolean matchesTitle(String text) {
+        return title.toLowerCase().contains(text.toLowerCase());
+    }
 }

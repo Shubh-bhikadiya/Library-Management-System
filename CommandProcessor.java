@@ -41,7 +41,6 @@ class CommandProcessor {
                 library.addMember(createMember(f[1], f[2], f[3]));
                 System.out.println("OK");
             }
-            case "INVENTORY" -> printInventory();
             case "BORROW" -> {
                 int dueDay = library.borrow(f[1], f[2]);
                 System.out.println("OK due on day " + dueDay);
@@ -54,7 +53,11 @@ class CommandProcessor {
                 int day = library.advance(Integer.parseInt(f[1]));
                 System.out.println("OK today is day " + day);
             }
-            default -> System.out.println("(not implemented yet) " + f[0]);
+            case "SEARCH" -> printSearch(f[1]);
+            case "LOANS" -> printLoans(f[1]);
+            case "OVERDUE" -> printOverdue();
+            case "INVENTORY" -> printInventory();
+            default -> throw new IllegalArgumentException("unknown command: " + f[0]);
         }
     }
 
@@ -65,6 +68,33 @@ class CommandProcessor {
             case "FACULTY" -> new Faculty(id, name);
             default -> throw new IllegalArgumentException("unknown member type: " + type);
         };
+    }
+
+    private void printSearch(String text) {
+        List<String> rows = new ArrayList<>();
+        for (LibraryItem item : library.search(text)) {
+            rows.add(item.getId() + "|" + item.getType() + "|" + item.getTitle());
+        }
+        printReport(rows);
+    }
+
+    private void printLoans(String memberId) throws MemberNotFoundException {
+        List<String> rows = new ArrayList<>();
+        for (Loan loan : library.loansOf(memberId)) {
+            rows.add(loan.getItem().getId() + "|" + loan.getItem().getTitle()
+                    + "|" + loan.getDueDay());
+        }
+        printReport(rows);
+    }
+
+    private void printOverdue() {
+        int today = library.getToday();
+        List<String> rows = new ArrayList<>();
+        for (Loan loan : library.overdue()) {
+            rows.add(loan.getItem().getId() + "|" + loan.getMember().getId()
+                    + "|" + loan.daysLate(today) + "|" + loan.fine(today));
+        }
+        printReport(rows);
     }
 
     private void printInventory() {
