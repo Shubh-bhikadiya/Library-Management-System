@@ -13,12 +13,16 @@ class CommandProcessor {
         while (in.hasNextLine()) {
             String line = in.nextLine();
             if (!line.isBlank()) {
-                execute(line);
+                try {
+                    execute(line);
+                } catch (LibraryException e) {
+                    System.out.println("ERROR " + e.getMessage());
+                }
             }
         }
     }
 
-    private void execute(String line) {
+    private void execute(String line) throws LibraryException {
         String[] f = line.split("\\|");
         switch (f[0]) {
             case "ADD_BOOK" -> {
